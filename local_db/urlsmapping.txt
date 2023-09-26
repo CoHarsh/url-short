@@ -1,1 +1,0 @@
-l06sGL},{https://www.npmjs.com/package/shrt-unique-id

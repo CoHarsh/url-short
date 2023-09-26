@@ -1,7 +1,10 @@
+require('dotenv').config();
+
+
 const express = require('express')
-const dotenv = require('dotenv').config();
 const {router} = require('./router');
 const cors = require('cors');
+const Database = require('./DB_Connect');
 
 const PORT = process.env.SERVER_PORT || 3000;
 const HOST = process.env.SERVER_HOST || 'localhost';
@@ -27,5 +30,6 @@ app.use('/',router);
 // TODO:
 
 app.listen(PORT,HOST,() => {
+    Database.connect(process.env.MONGO_USERNAME,process.env.MONGO_PASSWORD,process.env.MONGO_DBNAME)
     console.log(`Server is UP on PORT : ${PORT} ans HOST : ${HOST}`);
 });

@@ -13,7 +13,7 @@ router.get('/',(req,res)=>{
 
 router.post('/api/urlshort',ShortTheUrl);
 
-//handle the server hit and redirect the client with the long URL WORKING:
+//handle the server hit and redirect the client with the long URL :DONE:
 router.get('/:shortUrl',RedirectUserLong)
 
 //error handle
@@ -34,8 +34,3 @@ router.post('*',(req,res)=>{
 module.exports = {
     router
 };
-
-// function urlparser(url){
-//     const urlArray = url.split('#,#');
-//     return urlArray[0];
-// }

@@ -1,25 +1,6 @@
-const fs = require('fs');
-const readline = require('readline');
+const { URL } = require('../models/Urls')
+const client = require('../Radis_Client');
 
-const database_location = './local_db/urlsmapping.txt';
-
-async function findLinkForId(filePath, targetId) {
-    const fileStream = fs.createReadStream(filePath);
-    const rl = readline.createInterface({
-      input: fileStream,
-      crlfDelay: Infinity
-    });
-  
-    for await (const line of rl) {
-      const [id, link] = line.split('},{');
-      if (id === targetId) {
-        return link.trim();
-      }
-    }
-  
-    return null; // ID not found
-  }
-  
 
 const RedirectUserLong = async (req,res) =>{
     const id = req.params.shortUrl;
@@ -31,8 +12,38 @@ const RedirectUserLong = async (req,res) =>{
         return;
     }
 
-    const url = await findLinkForId(database_location,id);
-    if(!url){
+    try{
+      const urlexist = await client.hget('urls:cache',id,(err,object)=>{
+        if(err)console.log(err);
+      });
+      if(urlexist){
+        console.log("HIT!");
+        // res.status(200).json(JSON.parse(urlexist));
+        let urldata = JSON.parse(urlexist);
+        res.redirect(urldata[0].long_url);
+        return;
+      }else{
+        console.log("MISS");
+      }
+    }catch(err){
+      console.log(err);
+    }
+
+    var url_info;
+    try{
+      url_info = await URL.find({
+        short_url:id
+      });
+    }catch(err){
+      console.log(err);
+      res.status(500).json({
+        "status":false,
+        "error":"Database Error!"
+      });
+      return;
+    }
+
+    if(!url_info){
         res.status(404).json({
             "status":false,
             "error":"Url not found!"
@@ -40,8 +51,27 @@ const RedirectUserLong = async (req,res) =>{
         return;
     }
 
-    //redire the user to the long url
-    res.redirect(url);
+    //catch the URL
+    try{
+      await client.hmset(
+        'urls:cache',
+        id,
+        JSON.stringify(url_info),
+        (err,reply)=>{
+          if(err)console.log(err);
+          else{ 
+            console.log(reply);
+            client.expire('urls:cache', 3600); // Cache expires in 1 hour
+          }
+        }
+      )
+    }catch(err){
+      console.log(err);
+    }
+
+    // console.log(url_info[0].long_url);
+    // res.status(200).json(url_info[0].long_url);
+    res.redirect(url_info[0].long_url);
     return;
 };
 
